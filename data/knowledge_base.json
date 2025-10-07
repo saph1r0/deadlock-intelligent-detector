@@ -1,0 +1,132 @@
+{
+  "patterns": [
+    {
+      "pattern_id": "classic_two_thread",
+      "pattern_name": "Classic Two-Thread Deadlock",
+      "detected_in_file": "",
+      "detection_date": "",
+      "threads_involved": [],
+      "resources_involved": [],
+      "solution_applied": null,
+      "solution_effective": null,
+      "user_feedback": null,
+      "notes": "Patr\u00f3n cl\u00e1sico: 2 threads, 2 locks, orden inverso"
+    },
+    {
+      "pattern_id": "nested_locks_3_levels",
+      "pattern_name": "Nested Lock Acquisition (3+ levels)",
+      "detected_in_file": "",
+      "detection_date": "",
+      "threads_involved": [],
+      "resources_involved": [],
+      "solution_applied": null,
+      "solution_effective": null,
+      "user_feedback": null,
+      "notes": "Adquisici\u00f3n anidada profunda de locks"
+    },
+    {
+      "pattern_id": "dining_philosophers",
+      "pattern_name": "Dining Philosophers Variant",
+      "detected_in_file": "",
+      "detection_date": "",
+      "threads_involved": [],
+      "resources_involved": [],
+      "solution_applied": null,
+      "solution_effective": null,
+      "user_feedback": null,
+      "notes": "Patr\u00f3n circular de recursos"
+    },
+    {
+      "pattern_id": "detected_pattern_1",
+      "pattern_name": "Pattern detected_pattern_1",
+      "detected_in_file": "examples/deadlock_example.py",
+      "detection_date": "2025-10-07T16:37:34.191433",
+      "threads_involved": [
+        "thread_function_2",
+        "thread_function_1"
+      ],
+      "resources_involved": [
+        "lock_a",
+        "lock_b"
+      ],
+      "solution_applied": null,
+      "solution_effective": null,
+      "user_feedback": null,
+      "notes": "Detected HIGH severity deadlock"
+    },
+    {
+      "pattern_id": "detected_pattern_2",
+      "pattern_name": "Pattern detected_pattern_2",
+      "detected_in_file": "examples/deadlock_example.py",
+      "detection_date": "2025-10-07T16:37:34.192929",
+      "threads_involved": [
+        "main",
+        "thread_function_1"
+      ],
+      "resources_involved": [
+        "lock_a",
+        "lock_b"
+      ],
+      "solution_applied": null,
+      "solution_effective": null,
+      "user_feedback": null,
+      "notes": "Detected HIGH severity deadlock"
+    }
+  ],
+  "solutions": [
+    {
+      "solution_id": "lock_ordering",
+      "solution_name": "Lock Ordering Strategy",
+      "times_used": 0,
+      "times_successful": 0,
+      "avg_user_rating": 0.0,
+      "complexity": "LOW",
+      "performance_impact": "NONE"
+    },
+    {
+      "solution_id": "try_lock_timeout",
+      "solution_name": "Try-Lock with Timeout",
+      "times_used": 0,
+      "times_successful": 0,
+      "avg_user_rating": 0.0,
+      "complexity": "MEDIUM",
+      "performance_impact": "LOW"
+    },
+    {
+      "solution_id": "lock_hierarchy",
+      "solution_name": "Lock Hierarchy",
+      "times_used": 0,
+      "times_successful": 0,
+      "avg_user_rating": 0.0,
+      "complexity": "HIGH",
+      "performance_impact": "NONE"
+    }
+  ],
+  "history": [
+    {
+      "event": "detection",
+      "pattern_id": "detected_pattern_1",
+      "filename": "examples/deadlock_example.py",
+      "timestamp": "2025-10-07T14:40:42.064650"
+    },
+    {
+      "event": "detection",
+      "pattern_id": "detected_pattern_2",
+      "filename": "examples/deadlock_example.py",
+      "timestamp": "2025-10-07T14:40:42.065324"
+    },
+    {
+      "event": "detection",
+      "pattern_id": "detected_pattern_1",
+      "filename": "examples/deadlock_example.py",
+      "timestamp": "2025-10-07T16:37:34.191462"
+    },
+    {
+      "event": "detection",
+      "pattern_id": "detected_pattern_2",
+      "filename": "examples/deadlock_example.py",
+      "timestamp": "2025-10-07T16:37:34.192945"
+    }
+  ],
+  "last_updated": "2025-10-07T16:37:34.193371"
+}

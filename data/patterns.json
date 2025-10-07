@@ -1,0 +1,295 @@
+{
+  "deadlock_patterns": [
+    {
+      "id": "circular_wait",
+      "name": "Espera Circular (Circular Wait)",
+      "description": "Dos o más threads esperan recursos en forma circular",
+      "signature": {
+        "min_threads": 2,
+        "min_resources": 2,
+        "characteristics": ["cycle_detected", "inverse_lock_order"]
+      },
+      "severity": "HIGH",
+      "common_scenarios": [
+        "dining_philosophers",
+        "producer_consumer",
+        "bank_transfer"
+      ],
+      "detection_indicators": {
+        "rag_cycle": true,
+        "inverse_acquisition_order": true,
+        "nested_locks": true
+      }
+    },
+    {
+      "id": "hold_and_wait",
+      "name": "Mantener y Esperar (Hold and Wait)",
+      "description": "Thread mantiene un recurso mientras espera otro",
+      "signature": {
+        "min_threads": 2,
+        "min_resources": 2,
+        "characteristics": ["holding_while_waiting", "blocking_acquire"]
+      },
+      "severity": "MEDIUM",
+      "common_scenarios": [
+        "database_transactions",
+        "file_locking",
+        "nested_critical_sections"
+      ],
+      "detection_indicators": {
+        "acquire_without_release": true,
+        "nested_locks": true,
+        "timeout_absent": true
+      }
+    },
+    {
+      "id": "no_preemption",
+      "name": "Sin Prevención (No Preemption)",
+      "description": "Recursos no pueden ser forzadamente liberados",
+      "signature": {
+        "min_threads": 2,
+        "min_resources": 1,
+        "characteristics": ["no_timeout", "blocking_locks"]
+      },
+      "severity": "LOW",
+      "common_scenarios": [
+        "hardware_resources",
+        "exclusive_file_access",
+        "printer_spooler"
+      ],
+      "detection_indicators": {
+        "no_trylock": true,
+        "no_timeout": true,
+        "blocking_acquire": true
+      }
+    },
+    {
+      "id": "mutual_exclusion",
+      "name": "Exclusión Mutua (Mutual Exclusion)",
+      "description": "Recursos accesibles por un solo thread a la vez",
+      "signature": {
+        "min_threads": 2,
+        "min_resources": 1,
+        "characteristics": ["exclusive_access", "lock_usage"]
+      },
+      "severity": "INFO",
+      "common_scenarios": [
+        "shared_memory",
+        "critical_section",
+        "singleton_access"
+      ],
+      "detection_indicators": {
+        "lock_detected": true,
+        "mutex_detected": true,
+        "semaphore_count_one": true
+      }
+    }
+  ],
+  
+  "mitigation_strategies": [
+    {
+      "id": "lock_ordering",
+      "name": "Ordenamiento de Locks (Lock Ordering)",
+      "description": "Adquirir locks siempre en el mismo orden global",
+      "effectiveness": 95,
+      "complexity": "LOW",
+      "performance_impact": "NONE",
+      "implementation_effort": "LOW",
+      "prevents_patterns": ["circular_wait"],
+      "pros": [
+        "Solución simple y efectiva",
+        "Sin overhead de performance",
+        "Fácil de implementar",
+        "Previene deadlocks completamente"
+      ],
+      "cons": [
+        "Requiere disciplina en todo el código",
+        "Difícil de mantener en proyectos grandes",
+        "Puede no ser natural para la lógica del negocio"
+      ],
+      "best_for": [
+        "Proyectos medianos",
+        "Locks estáticos conocidos",
+        "Equipos pequeños"
+      ],
+      "code_template": "# Siempre: lock_a antes que lock_b\nlock_a.acquire()\ntry:\n    lock_b.acquire()\n    try:\n        # critical section\n        pass\n    finally:\n        lock_b.release()\nfinally:\n    lock_a.release()"
+    },
+    {
+      "id": "trylock_timeout",
+      "name": "Try-Lock con Timeout",
+      "description": "Intentar adquirir con timeout y reintentar",
+      "effectiveness": 80,
+      "complexity": "MEDIUM",
+      "performance_impact": "LOW",
+      "implementation_effort": "MEDIUM",
+      "prevents_patterns": ["hold_and_wait", "circular_wait"],
+      "pros": [
+        "Permite recovery automático",
+        "No requiere orden global",
+        "Flexible y adaptable",
+        "Buen balance complejidad/efectividad"
+      ],
+      "cons": [
+        "Requiere manejo de reintentos",
+        "Puede tener livelock",
+        "Complejidad en código",
+        "Performance variable"
+      ],
+      "best_for": [
+        "Sistemas distribuidos",
+        "Locks dinámicos",
+        "Alta concurrencia"
+      ],
+      "code_template": "import time\n\nMAX_RETRIES = 3\nfor attempt in range(MAX_RETRIES):\n    if lock_a.acquire(timeout=1.0):\n        try:\n            if lock_b.acquire(timeout=1.0):\n                try:\n                    # critical section\n                    break\n                finally:\n                    lock_b.release()\n            else:\n                # retry\n                time.sleep(0.1 * attempt)\n        finally:\n            lock_a.release()"
+    },
+    {
+      "id": "lock_hierarchy",
+      "name": "Jerarquía de Locks",
+      "description": "Asignar niveles a locks y adquirir en orden creciente",
+      "effectiveness": 90,
+      "complexity": "MEDIUM",
+      "performance_impact": "NONE",
+      "implementation_effort": "MEDIUM",
+      "prevents_patterns": ["circular_wait"],
+      "pros": [
+        "Solución escalable",
+        "Fácil de verificar",
+        "Sin overhead de runtime",
+        "Documentación implícita"
+      ],
+      "cons": [
+        "Requiere diseño previo",
+        "Difícil cambiar jerarquía",
+        "No siempre es natural",
+        "Puede ser restrictivo"
+      ],
+      "best_for": [
+        "Sistemas grandes",
+        "Arquitecturas complejas",
+        "Equipos grandes"
+      ],
+      "code_template": "# Definir jerarquía\nLOCK_LEVELS = {\n    'lock_a': 1,\n    'lock_b': 2,\n    'lock_c': 3\n}\n\nclass HierarchicalLock:\n    def __init__(self, name, level):\n        self.name = name\n        self.level = level\n        self.lock = threading.Lock()\n    \n    def acquire(self):\n        # Verificar que nivel actual < nivel nuevo\n        self.lock.acquire()"
+    },
+    {
+      "id": "memory_address_ordering",
+      "name": "Ordenamiento por Dirección de Memoria",
+      "description": "Ordenar locks por su dirección en memoria automáticamente",
+      "effectiveness": 85,
+      "complexity": "LOW",
+      "performance_impact": "NONE",
+      "implementation_effort": "LOW",
+      "prevents_patterns": ["circular_wait"],
+      "pros": [
+        "Automático (no requiere disciplina)",
+        "Sin cambios en lógica",
+        "Determinístico",
+        "Fácil de implementar"
+      ],
+      "cons": [
+        "Dependiente de implementación",
+        "Puede ser no intuitivo",
+        "Debugging más difícil",
+        "No funciona con locks remotos"
+      ],
+      "best_for": [
+        "Locks dinámicos",
+        "Prototipos rápidos",
+        "Sistemas locales"
+      ],
+      "code_template": "def acquire_locks(*locks):\n    # Ordenar por id (dirección de memoria)\n    sorted_locks = sorted(locks, key=id)\n    for lock in sorted_locks:\n        lock.acquire()\n    return sorted_locks\n\ndef release_locks(locks):\n    for lock in reversed(locks):\n        lock.release()\n\n# Uso\nlocks = acquire_locks(lock_a, lock_b)\ntry:\n    # critical section\n    pass\nfinally:\n    release_locks(locks)"
+    },
+    {
+      "id": "global_lock",
+      "name": "Lock Global Único",
+      "description": "Usar un solo lock para todas las operaciones críticas",
+      "effectiveness": 100,
+      "complexity": "LOW",
+      "performance_impact": "HIGH",
+      "implementation_effort": "LOW",
+      "prevents_patterns": ["circular_wait", "hold_and_wait"],
+      "pros": [
+        "Imposible tener deadlock",
+        "Muy simple",
+        "Fácil de razonar",
+        "Rápido de implementar"
+      ],
+      "cons": [
+        "Serializa todo",
+        "Performance terrible",
+        "No escala",
+        "Elimina ventajas de concurrencia"
+      ],
+      "best_for": [
+        "Prototipos",
+        "Código legacy temporal",
+        "Debugging"
+      ],
+      "code_template": "# Un solo lock para todo\nglobal_lock = threading.Lock()\n\ndef any_critical_function():\n    with global_lock:\n        # Toda operación crítica aquí\n        pass"
+    },
+    {
+      "id": "lock_free_structures",
+      "name": "Estructuras Lock-Free",
+      "description": "Usar estructuras de datos sin locks (CAS, atomic ops)",
+      "effectiveness": 100,
+      "complexity": "HIGH",
+      "performance_impact": "POSITIVE",
+      "implementation_effort": "HIGH",
+      "prevents_patterns": ["all"],
+      "pros": [
+        "Sin deadlocks posibles",
+        "Alta performance",
+        "Excelente escalabilidad",
+        "No hay contención"
+      ],
+      "cons": [
+        "Muy complejo",
+        "Difícil de debuggear",
+        "Limitado a operaciones específicas",
+        "Requiere expertise avanzado"
+      ],
+      "best_for": [
+        "Sistemas críticos",
+        "Ultra-alta concurrencia",
+        "Expertos en concurrencia"
+      ],
+      "code_template": "from queue import Queue  # thread-safe\nfrom collections import deque\nimport threading\n\n# Usar estructuras built-in thread-safe\nshared_queue = Queue()\nshared_data = deque()  # con lock interno\n\n# O usar atomic operations\nfrom ctypes import c_int\ncounter = c_int(0)"
+    }
+  ],
+  
+  "real_world_examples": [
+    {
+      "name": "Dining Philosophers",
+      "description": "5 filósofos comparten 5 tenedores",
+      "pattern": "circular_wait",
+      "recommended_solutions": ["lock_ordering", "lock_hierarchy"],
+      "code_snippet": "# Problema clásico\nfor i in range(5):\n    fork_left = forks[i]\n    fork_right = forks[(i+1)%5]\n    # Deadlock si todos toman fork_left simultáneamente"
+    },
+    {
+      "name": "Bank Transfer",
+      "description": "Transferencias entre cuentas requieren locks de ambas cuentas",
+      "pattern": "circular_wait",
+      "recommended_solutions": ["memory_address_ordering", "lock_ordering"],
+      "code_snippet": "def transfer(from_account, to_account, amount):\n    from_account.lock.acquire()\n    to_account.lock.acquire()  # Deadlock si A->B y B->A simultáneos\n    # ..."
+    },
+    {
+      "name": "Producer-Consumer",
+      "description": "Productor y consumidor con múltiples buffers",
+      "pattern": "hold_and_wait",
+      "recommended_solutions": ["lock_free_structures", "trylock_timeout"],
+      "code_snippet": "# Buffer compartido\nproducer locks buffer1, waits for buffer2\nconsumer locks buffer2, waits for buffer1"
+    }
+  ],
+  
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2025-10-07",
+    "total_patterns": 4,
+    "total_strategies": 6,
+    "total_examples": 3,
+    "references": [
+      "Operating System Concepts (Silberschatz)",
+      "The Art of Multiprocessor Programming (Herlihy)",
+      "Java Concurrency in Practice (Goetz)"
+    ]
+  }
+}

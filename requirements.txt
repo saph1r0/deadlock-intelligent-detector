@@ -1,0 +1,24 @@
+# Análisis de código
+pycparser>=2.21
+ast-decompiler>=0.7.0
+
+# Manipulación de grafos
+networkx>=3.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# CLI
+click>=8.1.0
+colorama>=0.4.6
+
+# Utilidades
+jsonschema>=4.17.0
+dataclasses-json>=0.6.0
+
+# Performance
+psutil>=5.9.0
+
+# Visualización (opcional)
+matplotlib>=3.7.0
